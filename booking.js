@@ -8,22 +8,6 @@ const USER_INFO = {
   phone: '08058966083'
 };
 
-// 最終木曜取得
-function getLastThursday() {
-
-  const today = new Date();
-
-  // 30日後へ
-  today.setDate(today.getDate() + 30);
-
-  // 木曜へ戻す
-  while (today.getDay() !== 4) {
-    today.setDate(today.getDate() - 1);
-  }
-
-  return today;
-}
-
 (async () => {
 
   const browser = await chromium.launch({
@@ -44,14 +28,27 @@ function getLastThursday() {
     );
 
     // タイトル選択
+    console.log('タイトル選択');
+
     await page.click(
       'text=配信希望タイトルを選択してください'
     );
 
-    await page.waitForTimeout(1000);
+    // CHUNITHM表示待ち
+    await page.waitForSelector(
+      'a:has-text("CHUNITHM")',
+      {
+        state: 'visible',
+        timeout: 10000
+      }
+    );
 
     // CHUNITHM選択
-    await page.click('text=CHUNITHM');
+    console.log('CHUNITHM選択');
+
+    await page.locator(
+      'a:has-text("CHUNITHM")'
+    ).click();
 
     console.log('予約監視開始');
 
@@ -63,15 +60,18 @@ function getLastThursday() {
         waitUntil: 'networkidle'
       });
 
-      // 一番最後の20:00を押す
+      // 20:00を探す
       const buttons = page.locator('text=20:00');
 
       const count = await buttons.count();
 
+      console.log(`20:00件数: ${count}`);
+
       if (count > 0) {
 
-        console.log('予約可能');
+        console.log('20:00発見');
 
+        // 一番最後を押す
         await buttons.last().click();
 
         reserved = true;
@@ -80,7 +80,7 @@ function getLastThursday() {
 
         console.log('未解放');
 
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000);
       }
     }
 
@@ -120,7 +120,7 @@ function getLastThursday() {
 
     await page.waitForLoadState('networkidle');
 
-    // 予約者情報
+    // 予約者情報入力
     console.log('予約者情報入力');
 
     await page.fill(
@@ -157,7 +157,6 @@ function getLastThursday() {
 
     console.log('予約完了');
 
-    // スクショ保存
     await page.screenshot({
       path: 'success.png',
       fullPage: true
@@ -178,4 +177,5 @@ function getLastThursday() {
 
     await browser.close();
   }
+
 })();
