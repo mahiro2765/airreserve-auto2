@@ -3,51 +3,62 @@ const fs = require("fs");
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: null,
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu"
+    ],
   });
 
   const page = await browser.newPage();
 
   try {
+    console.log("サイトアクセス");
+
     await page.goto("https://YOUR_SITE_URL", {
       waitUntil: "networkidle2",
     });
 
     await page.waitForTimeout(2000);
 
-    console.log("木曜のみ検索");
+    console.log("木曜のみ探索");
 
-    const candidates = await page.$$("button, a, div, span");
+    const elements = await page.$$("button, a, div, span");
 
     let target = null;
 
-    for (const el of candidates) {
+    for (const el of elements) {
       const text = await page.evaluate(e => e.textContent?.trim(), el);
 
       if (!text) continue;
 
-      // ★ 木曜だけ許可
+      // 木曜判定（必要ならここ調整）
       const isThursday =
         text.includes("木") ||
-        text.includes("Thu") ||
-        text.includes("THU");
+        text.toLowerCase().includes("thu");
 
       if (!isThursday) continue;
 
-      // その中で○を探す
-      const hasCircle = text.includes("○");
-
-      if (isThursday && hasCircle) {
+      // ○だけ取る
+      if (text.includes("○")) {
         target = el;
         break;
       }
     }
 
     if (!target) {
-      const html = await page.content();
-      fs.writeFileSync("debug.html", html);
-      throw new Error("木曜の○が見つからない");
+      console.log("木曜○が見つからない");
+
+      fs.writeFileSync("debug.html", await page.content());
+
+      await page.screenshot({
+        path: "error.png",
+        fullPage: true,
+      });
+
+      throw new Error("target not found");
     }
 
     console.log("木曜○クリック");
@@ -55,33 +66,47 @@ const fs = require("fs");
 
     await page.waitForTimeout(1500);
 
-    // 予約確定
-    const confirmButtons = await page.$$("button");
+    // 予約確定ボタン探索
+    const buttons = await page.$$("button");
 
-    for (const btn of confirmButtons) {
-      const t = await page.evaluate(e => e.textContent, btn);
+    let confirmed = false;
+
+    for (const btn of buttons) {
+      const text = await page.evaluate(e => e.textContent?.trim(), btn);
+
+      if (!text) continue;
 
       if (
-        t?.includes("予約") ||
-        t?.includes("確定") ||
-        t?.includes("OK")
+        text.includes("予約") ||
+        text.includes("確定") ||
+        text.includes("OK") ||
+        text.includes("決定")
       ) {
-        console.log("確定押下:", t);
+        console.log("確定ボタン:", text);
         await btn.click();
+        confirmed = true;
         break;
       }
     }
 
+    if (!confirmed) {
+      console.log("確定ボタンが見つからない可能性あり");
+    }
+
     await page.waitForTimeout(3000);
+
     console.log("完了");
 
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err.message);
 
-    await page.screenshot({ path: "error.png", fullPage: true });
+    fs.writeFileSync("debug.html", await page.content());
 
-    const html = await page.content();
-    fs.writeFileSync("debug.html", html);
+    await page.screenshot({
+      path: "error.png",
+      fullPage: true,
+    });
+
   } finally {
     await browser.close();
   }
