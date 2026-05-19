@@ -1,7 +1,11 @@
 {
   "name": "airreserve-auto",
   "version": "1.0.0",
+  "main": "booking.js",
+  "scripts": {
+    "start": "node booking.js"
+  },
   "dependencies": {
-    "playwright": "^1.52.0"
+    "puppeteer": "^24.0.0"
   }
 }
