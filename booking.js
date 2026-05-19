@@ -30,24 +30,18 @@ const USER_INFO = {
     // タイトル選択
     console.log('タイトル選択');
 
-    await page.click(
-      'text=配信希望タイトルを選択してください'
-    );
+    await page.locator(
+      'div.selectWrap'
+    ).first().click();
 
-    // CHUNITHM表示待ち
-    await page.waitForSelector(
-      'a:has-text("CHUNITHM")',
-      {
-        state: 'visible',
-        timeout: 10000
-      }
-    );
+    // 少し待機
+    await page.waitForTimeout(1000);
 
     // CHUNITHM選択
     console.log('CHUNITHM選択');
 
     await page.locator(
-      'a:has-text("CHUNITHM")'
+      'a:has-text("CHUNITHM"):visible'
     ).click();
 
     console.log('予約監視開始');
@@ -60,8 +54,13 @@ const USER_INFO = {
         waitUntil: 'networkidle'
       });
 
-      // 20:00を探す
-      const buttons = page.locator('text=20:00');
+      // 少し待つ
+      await page.waitForTimeout(1000);
+
+      // 20:00取得
+      const buttons = page.locator(
+        'text=20:00'
+      );
 
       const count = await buttons.count();
 
@@ -118,7 +117,9 @@ const USER_INFO = {
       'button:has-text("ログイン")'
     );
 
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState(
+      'networkidle'
+    );
 
     // 予約者情報入力
     console.log('予約者情報入力');
@@ -157,6 +158,7 @@ const USER_INFO = {
 
     console.log('予約完了');
 
+    // 成功スクショ
     await page.screenshot({
       path: 'success.png',
       fullPage: true
@@ -166,6 +168,7 @@ const USER_INFO = {
 
     console.error(e);
 
+    // エラースクショ
     await page.screenshot({
       path: 'error.png',
       fullPage: true
