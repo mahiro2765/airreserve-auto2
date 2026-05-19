@@ -27,7 +27,6 @@ const USER_INFO = {
       }
     );
 
-    // 少し待つ
     await page.waitForTimeout(3000);
 
     // CHUNITHM選択
@@ -35,9 +34,10 @@ const USER_INFO = {
 
     await page.locator(
       'a:has-text("CHUNITHM")'
-    ).first().click();
+    ).first().click({
+      force: true
+    });
 
-    // 少し待つ
     await page.waitForTimeout(3000);
 
     // ○ボタン取得
@@ -56,9 +56,10 @@ const USER_INFO = {
     }
 
     // 一番最後を押す
-    await reserveButtons.last().click();
+    await reserveButtons.last().click({
+      force: true
+    });
 
-    // 少し待つ
     await page.waitForTimeout(2000);
 
     // 開始時間20:00
@@ -99,7 +100,6 @@ const USER_INFO = {
       'networkidle'
     );
 
-    // 少し待つ
     await page.waitForTimeout(3000);
 
     // 予約者情報入力
@@ -139,7 +139,6 @@ const USER_INFO = {
 
     console.log('予約完了');
 
-    // 成功スクショ
     await page.screenshot({
       path: 'success.png',
       fullPage: true
@@ -149,7 +148,6 @@ const USER_INFO = {
 
     console.error(e);
 
-    // エラースクショ
     await page.screenshot({
       path: 'error.png',
       fullPage: true
