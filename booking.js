@@ -23,65 +23,43 @@ const USER_INFO = {
     await page.goto(
       'https://airrsv.net/sw-omori-reservation/calendar',
       {
-        waitUntil: 'networkidle'
+        waitUntil: 'domcontentloaded'
       }
     );
 
-    // タイトル選択
-    console.log('タイトル選択');
-
-    await page.locator(
-      'div.selectWrap'
-    ).first().click();
-
-    // 少し待機
-    await page.waitForTimeout(1000);
+    // 少し待つ
+    await page.waitForTimeout(3000);
 
     // CHUNITHM選択
     console.log('CHUNITHM選択');
 
     await page.locator(
-      'a:has-text("CHUNITHM"):visible'
-    ).click();
+      'a:has-text("CHUNITHM")'
+    ).first().click();
 
-    console.log('予約監視開始');
+    // 少し待つ
+    await page.waitForTimeout(3000);
 
-    let reserved = false;
+    // ○ボタン取得
+    console.log('予約ボタン取得');
 
-    while (!reserved) {
+    const reserveButtons = page.locator(
+      'a:has-text("○")'
+    );
 
-      await page.reload({
-        waitUntil: 'networkidle'
-      });
+    const count = await reserveButtons.count();
 
-      // 少し待つ
-      await page.waitForTimeout(1000);
+    console.log(`○ボタン数: ${count}`);
 
-      // 20:00取得
-      const buttons = page.locator(
-        'text=20:00'
-      );
-
-      const count = await buttons.count();
-
-      console.log(`20:00件数: ${count}`);
-
-      if (count > 0) {
-
-        console.log('20:00発見');
-
-        // 一番最後を押す
-        await buttons.last().click();
-
-        reserved = true;
-
-      } else {
-
-        console.log('未解放');
-
-        await page.waitForTimeout(1000);
-      }
+    if (count === 0) {
+      throw new Error('○ボタンが見つかりません');
     }
+
+    // 一番最後を押す
+    await reserveButtons.last().click();
+
+    // 少し待つ
+    await page.waitForTimeout(2000);
 
     // 開始時間20:00
     console.log('開始時間選択');
@@ -120,6 +98,9 @@ const USER_INFO = {
     await page.waitForLoadState(
       'networkidle'
     );
+
+    // 少し待つ
+    await page.waitForTimeout(3000);
 
     // 予約者情報入力
     console.log('予約者情報入力');
